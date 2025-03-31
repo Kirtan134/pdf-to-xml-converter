@@ -191,12 +191,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper function to validate URLs
-function isValidUrl(string: string): boolean {
+// Remove or comment out the unused functions
+/*
+function isValidUrl(urlString: string): boolean {
   try {
     new URL(string);
     return true;
   } catch (_) {
     return false;
   }
-} 
+}
+
+function _(string: string): string {
+  // ... existing code ...
+}
+*/ 

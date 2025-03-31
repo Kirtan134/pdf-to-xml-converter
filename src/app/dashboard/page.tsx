@@ -5,27 +5,21 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-interface Conversion {
+type Conversion = {
   id: string;
-  userId: string;
   filename: string;
-  originalUrl: string;
-  convertedXml: string;
   createdAt: string;
+  status: string;
   pageCount: number;
   structureType: string;
+  fileSize: number;
+  processingTime: number;
   detectedTables: number;
   detectedLists: number;
   detectedHeadings: number;
   detectedImages: number;
-  status: string;
-  processingTime: number;
-  fileSize: number;
-  characterCount: number;
-  wordCount: number;
-  tags: string[];
-  metadata: any;
-}
+  metadata: string;
+};
 
 interface PaginationInfo {
   currentPage: number;
@@ -215,21 +209,6 @@ export default function DashboardPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
-  };
-
-  // Format filesize
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'N/A';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-
-  // Format time duration
-  const formatTime = (ms?: number) => {
-    if (!ms) return 'N/A';
-    if (ms < 1000) return ms + ' ms';
-    return (ms / 1000).toFixed(1) + ' s';
   };
 
   if (status === "loading" || loading) {

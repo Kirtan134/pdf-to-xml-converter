@@ -5,11 +5,23 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type ConversionDetail = {
+type Conversion = {
   id: string;
-  fileName: string;
-  convertedXml: string;
+  filename: string;
   createdAt: string;
+  status: string;
+  pageCount: number;
+  structureType: string;
+  fileSize: number;
+  processingTime: number;
+  convertedXml: string;
+  detectedTables: number;
+  detectedLists: number;
+  detectedHeadings: number;
+  detectedImages: number;
+  wordCount: number;
+  characterCount: number;
+  metadata: string;
 };
 
 export default function ConversionDetailPage() {
@@ -17,7 +29,7 @@ export default function ConversionDetailPage() {
   const params = useParams();
   const conversionId = params?.id as string;
   const { status } = useSession();
-  const [conversion, setConversion] = useState<ConversionDetail | null>(null);
+  const [conversion, setConversion] = useState<Conversion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -68,7 +80,7 @@ export default function ConversionDetailPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `converted-${conversion.fileName.replace(".pdf", "")}.xml`;
+      a.download = `converted-${conversion.filename.replace(".pdf", "")}.xml`;
       document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
@@ -110,7 +122,7 @@ export default function ConversionDetailPage() {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="mb-4">
             <h2 className="text-xl font-semibold mb-2 text-gray-900">File Information</h2>
-            <p className="text-gray-800"><strong className="text-gray-900">File Name:</strong> {conversion.fileName}</p>
+            <p className="text-gray-800"><strong className="text-gray-900">File Name:</strong> {conversion.filename}</p>
             <p className="text-gray-800"><strong className="text-gray-900">Converted on:</strong> {new Date(conversion.createdAt).toLocaleString()}</p>
           </div>
           

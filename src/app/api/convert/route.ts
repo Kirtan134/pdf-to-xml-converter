@@ -21,6 +21,41 @@ declare module "next-auth" {
   }
 }
 
+// Add this type definition at the top of the file, after imports
+type PDFTextItem = {
+  x: number;
+  y: number;
+  w: number;
+  h?: number;
+  sw?: number;
+  R: { T: string; S?: number }[];
+  A?: string;
+  oc?: boolean;
+  clr?: number;
+};
+
+type PDFPage = {
+  Width?: number;
+  Height?: number;
+  HLines?: { x: number; y: number; w: number; l: number }[];
+  VLines?: { x: number; y: number; h: number; l: number }[];
+  Fills?: unknown[];
+  Texts: PDFTextItem[];
+};
+
+type PDFData = {
+  Pages: PDFPage[];
+  Meta?: {
+    Title?: string;
+    Author?: string;
+    Subject?: string;
+    Keywords?: string;
+    Creator?: string;
+    Producer?: string;
+    CreationDate?: string;
+  };
+};
+
 export async function POST(req: Request) {
   const startTime = Date.now();
   
@@ -36,7 +71,7 @@ export async function POST(req: Request) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    let structureType = (formData.get("structureType") as string) || "enhanced";
+    const structureType = (formData.get("structureType") as string) || "enhanced";
 
     if (!file) {
       return NextResponse.json(
@@ -121,7 +156,7 @@ export async function POST(req: Request) {
     // Parse PDF to get content
     const pdfParser = new PDFParser();
     
-    const pdfData = await new Promise<any>((resolve, reject) => {
+    const pdfData = await new Promise<PDFData>((resolve, reject) => {
       pdfParser.on("pdfParser_dataError", (error) => {
         console.error("PDF parsing error:", error);
         reject(error);
@@ -243,7 +278,7 @@ export async function POST(req: Request) {
 }
 
 // Basic structure - just texts with positions
-function generateBasicXml(pdfData: any): string {
+function generateBasicXml(pdfData: PDFData): string {
   const pages = pdfData.Pages;
   let xmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n<document>\n';
   
@@ -268,7 +303,11 @@ function generateBasicXml(pdfData: any): string {
 }
 
 // Enhanced structure - groups text into paragraphs based on positioning
-function generateEnhancedXml(pdfData: any): { xml: string, detectedLists: number, detectedHeadings: number } {
+function generateEnhancedXml(pdfData: PDFData): { 
+  xml: string, 
+  detectedLists: number, 
+  detectedHeadings: number 
+} {
   const pages = pdfData.Pages;
   let xmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n<document>\n';
   
@@ -378,7 +417,7 @@ function generateEnhancedXml(pdfData: any): { xml: string, detectedLists: number
 }
 
 // Full structure - tries to identify headers, paragraphs, tables and other document elements
-function generateFullXml(pdfData: any): { 
+function generateFullXml(pdfData: PDFData): { 
   xml: string, 
   detectedTables: number, 
   detectedLists: number, 
@@ -489,8 +528,6 @@ function generateFullXml(pdfData: any): {
     }
     
     // Output paragraphs with structure identification
-    let lastElementType = "none";
-    
     sortedYKeys.forEach((yKey) => {
       // Sort texts within paragraph by X position
       const sortedTexts = paragraphs[yKey].sort((a, b) => a.x - b.x);
@@ -522,7 +559,6 @@ function generateFullXml(pdfData: any): {
       if (isHeader) {
         const headerText = sortedTexts.map(text => decodeURIComponent(text.R[0].T)).join(" ");
         xmlContent += `    <heading level="${headerLevel}" y="${yKey}">${headerText}</heading>\n`;
-        lastElementType = "heading";
         detectedHeadings++;
       } else {
         // Check if this is a list item (starts with bullet or number)
@@ -550,7 +586,6 @@ function generateFullXml(pdfData: any): {
           });
           
           xmlContent += `    </list-item>\n`;
-          lastElementType = "list-item";
           detectedLists++;
         } else {
           xmlContent += `    <paragraph y="${yKey}">\n`;
@@ -573,7 +608,6 @@ function generateFullXml(pdfData: any): {
           });
           
           xmlContent += `    </paragraph>\n`;
-          lastElementType = "paragraph";
         }
       }
     });
@@ -593,9 +627,13 @@ function generateFullXml(pdfData: any): {
 }
 
 // Function to detect tables by analyzing grid patterns in text
-function detectTables(texts: any[]): { tables: any[], tableCells: any[], tableCount: number } {
-  const tables: any[] = [];
-  const tableCells: any[] = [];
+function detectTables(texts: PDFTextItem[]): { 
+  tables: Record<string, unknown>[],
+  tableCells: Record<string, unknown>[], 
+  tableCount: number 
+} {
+  const tables: Record<string, unknown>[] = [];
+  const tableCells: Record<string, unknown>[] = [];
   let tableCount = 0;
   
   // First step: identify grid patterns
@@ -625,7 +663,7 @@ function detectTables(texts: any[]): { tables: any[], tableCells: any[], tableCo
   
   // Check for consecutive rows to identify tables
   let currentTableRows: number[] = [];
-  let gapThreshold = 2.0; // Maximum gap between rows to be considered part of the same table
+  const gapThreshold = 1.5; // Threshold for identifying gaps between table rows
   
   // Group rows into tables
   for (let i = 0; i < potentialRowPositions.length; i++) {
@@ -669,7 +707,7 @@ function detectTables(texts: any[]): { tables: any[], tableCells: any[], tableCo
 }
 
 // Helper to process rows of a detected table
-function processTableRows(rowPositions: number[], texts: any[], xPositions: number[]) {
+function processTableRows(rowPositions: number[], texts: PDFTextItem[], xPositions: number[]) {
   const table = {
     rows: {} as Record<string, any[]>,
   };
@@ -713,7 +751,7 @@ function processTableRows(rowPositions: number[], texts: any[], xPositions: numb
 }
 
 // Helper to find column positions for a table
-function findColumnPositions(rowPositions: number[], texts: any[], xPositions: number[]) {
+function findColumnPositions(rowPositions: number[], texts: PDFTextItem[], xPositions: number[]) {
   // Get all texts in the table rows
   const tableTexts = texts.filter(t => 
     rowPositions.some(y => Math.round(t.y * 10) / 10 === y)

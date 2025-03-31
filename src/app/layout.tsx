@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { NextAuthProvider } from "@/components/NextAuthProvider";
+import NextAuthProvider from "@/components/NextAuthProvider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
 
     // Validate and prepare the where clause
-    const where: any = { userId };
+    const where: Record<string, unknown> = { userId };
     
     // Search in filename and tags - use simple contains without mode parameter
     if (search) {
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Prepare the order clause
-    let orderBy: any = {};
+    const orderBy: Record<string, string> = {};
     if (sortBy === 'filename' || sortBy === 'createdAt' || sortBy === 'pageCount') {
       orderBy[sortBy] = sortOrder;
     } else {

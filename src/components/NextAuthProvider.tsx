@@ -1,16 +1,9 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 
-export function NextAuthProvider({ children }: { children: ReactNode }) {
-  // Use state to hydrate properly and avoid hydration mismatch
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+export default function NextAuthProvider({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       {children}

@@ -27,13 +27,10 @@ export default function ConvertPage() {
   const { data: session, status } = useSession();
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [error, setError] = useState("");
-  const [isConverting, setIsConverting] = useState(false);
-  const [xmlContent, setXmlContent] = useState("");
-  const [pageXmlContent, setPageXmlContent] = useState("");
-  const [conversionId, setConversionId] = useState("");
-  const [pageCount, setPageCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
   const [structureType, setStructureType] = useState("enhanced");
+  const [conversionResult, setConversionResult] = useState<string>("");
+  const [showResult, setShowResult] = useState(false);
+  const [xmlDownloadUrl, setXmlDownloadUrl] = useState("");
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [showCopyNotification, setShowCopyNotification] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -131,9 +128,7 @@ export default function ConvertPage() {
 
     // Reset state
     setError("");
-    setXmlContent("");
-    setPageXmlContent("");
-    setConversionId("");
+    setConversionResult("");
     setStatistics(null);
     
     // Update status
@@ -172,16 +167,11 @@ export default function ConvertPage() {
         });
         
         // Store the full XML content
-        setXmlContent(data.xml);
+        setConversionResult(data.xml);
         
         // Extract and set the first page's content for display
         const firstPageXml = extractPageXml(data.xml, 1);
-        setPageXmlContent(firstPageXml);
-        
-        setConversionId(data.conversionId);
-        setPageCount(data.pageCount || 1);
-        setCurrentPage(1);
-        setViewMode('xml');
+        setConversionResult(firstPageXml);
         
         if (data.statistics) {
           setStatistics(data.statistics);
@@ -192,7 +182,6 @@ export default function ConvertPage() {
       
       // If conversion is processing, start polling for updates
       if (data.conversionId) {
-        setConversionId(data.conversionId);
         setConversionStatus({
           progress: 30,
           status: 'processing',
@@ -259,15 +248,11 @@ export default function ConvertPage() {
             });
             
             // Store the full XML content
-            setXmlContent(conversion.convertedXml);
+            setConversionResult(conversion.convertedXml);
             
             // Also set the first page's content for display
             const firstPageXml = extractPageXml(conversion.convertedXml, 1);
-            setPageXmlContent(firstPageXml);
-            
-            setPageCount(conversion.pageCount || 1);
-            setCurrentPage(1);
-            setViewMode('xml');
+            setConversionResult(firstPageXml);
             
             if (data.statistics) {
               setStatistics(data.statistics);
@@ -333,7 +318,7 @@ export default function ConvertPage() {
 
   const handleCopyXml = () => {
     // Copy the appropriate XML content based on view mode
-    const contentToCopy = pageCount > 1 && currentPage > 0 ? pageXmlContent : xmlContent;
+    const contentToCopy = conversionResult;
     
     if (contentToCopy) {
       navigator.clipboard.writeText(contentToCopy)
@@ -353,7 +338,7 @@ export default function ConvertPage() {
 
   const handleDownloadXml = () => {
     // Download the appropriate XML content based on view mode
-    const contentToDownload = pageCount > 1 && currentPage > 0 ? pageXmlContent : xmlContent;
+    const contentToDownload = conversionResult;
     
     if (contentToDownload) {
       const blob = new Blob([contentToDownload], { type: "application/xml" });
@@ -362,9 +347,7 @@ export default function ConvertPage() {
       a.href = url;
       
       // Add page number to filename if viewing a specific page
-      const filename = pageCount > 1 && currentPage > 0
-        ? `converted-${pdfFile?.name.replace(".pdf", "")}-page${currentPage}.xml`
-        : `converted-${pdfFile?.name.replace(".pdf", "")}.xml`;
+      const filename = `converted-${pdfFile?.name.replace(".pdf", "")}.xml`;
       
       a.download = filename;
       document.body.appendChild(a);
@@ -378,18 +361,26 @@ export default function ConvertPage() {
     router.push("/dashboard");
   };
 
-  const handleChangePage = (newPage: number) => {
-    if (newPage >= 1 && newPage <= pageCount) {
-      setCurrentPage(newPage);
-      
-      // Extract and update the XML for the specific page
-      const pageXml = extractPageXml(xmlContent, newPage);
-      setPageXmlContent(pageXml);
-      
-      // Scroll to the top of the XML display
-      if (pdfContainerRef.current) {
-        pdfContainerRef.current.scrollTop = 0;
-      }
+  const handleStructureChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStructureType(e.target.value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (!pdfFile) {
+      setError("Please select a PDF file to convert");
+      return;
+    }
+    
+    // ... existing code ...
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setPdfFile(files[0]);
+      setError("");
     }
   };
 
@@ -403,16 +394,15 @@ export default function ConvertPage() {
 
   // Search functionality - updated to use debounced search term
   useEffect(() => {
-    if (!debouncedSearchTerm.trim() || !xmlContent) return;
+    if (!debouncedSearchTerm.trim() || !conversionResult) return;
     
     try {
-      const contentToSearch = pageCount > 1 ? pageXmlContent : xmlContent;
       const term = debouncedSearchTerm.toLowerCase();
       const results: number[] = [];
       
       let lastIndex = -1;
       while (true) {
-        lastIndex = contentToSearch.toLowerCase().indexOf(term, lastIndex + 1);
+        lastIndex = conversionResult.toLowerCase().indexOf(term, lastIndex + 1);
         if (lastIndex === -1) break;
         results.push(lastIndex);
       }
@@ -428,20 +418,19 @@ export default function ConvertPage() {
       console.error("Search error:", error);
       // Silently fail - don't update search results
     }
-  }, [debouncedSearchTerm, xmlContent, pageXmlContent, pageCount]);
+  }, [debouncedSearchTerm, conversionResult]);
   
   // Original handle search function - removed automatic search, only called on button click
   const handleSearch = () => {
-    if (!searchTerm.trim() || !xmlContent) return;
+    if (!searchTerm.trim() || !conversionResult) return;
     
     try {
-      const contentToSearch = pageCount > 1 ? pageXmlContent : xmlContent;
       const term = searchTerm.toLowerCase();
       const results: number[] = [];
       
       let lastIndex = -1;
       while (true) {
-        lastIndex = contentToSearch.toLowerCase().indexOf(term, lastIndex + 1);
+        lastIndex = conversionResult.toLowerCase().indexOf(term, lastIndex + 1);
         if (lastIndex === -1) break;
         results.push(lastIndex);
       }
@@ -486,7 +475,7 @@ export default function ConvertPage() {
     if (!preElement) return;
     
     // Get the text content and calculate the position
-    const textContent = pageCount > 1 ? pageXmlContent : xmlContent;
+    const textContent = conversionResult;
     const position = searchResults[index];
     
     // Create a temporary div to measure positions
@@ -518,16 +507,16 @@ export default function ConvertPage() {
   // Reset search when changing pages
   useEffect(() => {
     resetSearch();
-  }, [currentPage]);
+  }, []);
 
   // Helper function to render XML with highlighted search terms
   const getHighlightedContent = () => {
     if (!searchTerm.trim() || searchResults.length === 0) {
-      return pageCount > 1 ? pageXmlContent : xmlContent;
+      return conversionResult;
     }
     
     try {
-      const content = pageCount > 1 ? pageXmlContent : xmlContent;
+      const content = conversionResult;
       
       // First sanitize any potential highlight markers already in the content
       const sanitizedContent = content
@@ -566,7 +555,7 @@ export default function ConvertPage() {
       return parts.join('');
     } catch (error) {
       console.error("Error highlighting content:", error);
-      return pageCount > 1 ? pageXmlContent : xmlContent;
+      return conversionResult;
     }
   };
 
@@ -629,7 +618,7 @@ export default function ConvertPage() {
               <select
                 id="structureType"
                 value={structureType}
-                onChange={(e) => setStructureType(e.target.value)}
+                onChange={handleStructureChange}
                 className="w-full p-2.5 border border-gray-300 rounded-md text-gray-800 mb-4"
                 disabled={conversionStatus.status === 'uploading' || conversionStatus.status === 'processing'}
               >
@@ -719,7 +708,7 @@ export default function ConvertPage() {
           {/* PDF Preview Section */}
           <div className="bg-white p-6 rounded-lg shadow-md mb-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900">
-              {xmlContent ? "Document Preview" : "PDF Preview"}
+              {conversionResult ? "Document Preview" : "PDF Preview"}
             </h2>
             
             {pdfPreviewUrl ? (
@@ -738,7 +727,7 @@ export default function ConvertPage() {
           </div>
           
           {/* XML Result Section */}
-          {xmlContent && (
+          {conversionResult && (
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">Conversion Result</h2>
@@ -828,33 +817,6 @@ export default function ConvertPage() {
                 )}
               </div>
               
-              {/* Page Selector for Multi-page PDFs */}
-              {pageCount > 1 && (
-                <div className="mb-4 flex items-center justify-between bg-gray-50 p-2 rounded-md">
-                  <div className="text-sm font-medium text-gray-700">
-                    Page {currentPage} of {pageCount}
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleChangePage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="bg-white border border-gray-300 text-gray-800 px-2 py-1 rounded text-sm font-medium disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    
-                    <button
-                      onClick={() => handleChangePage(currentPage + 1)}
-                      disabled={currentPage === pageCount}
-                      className="bg-white border border-gray-300 text-gray-800 px-2 py-1 rounded text-sm font-medium disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              )}
-              
               {/* Statistics Summary */}
               {statistics && (
                 <div className="mb-4 grid grid-cols-4 gap-2 bg-gray-50 p-3 rounded-md">
@@ -868,7 +830,7 @@ export default function ConvertPage() {
                   </div>
                   <div className="text-center">
                     <div className="text-gray-600 text-xs font-medium">Pages</div>
-                    <div className="font-medium text-gray-900">{pageCount}</div>
+                    <div className="font-medium text-gray-900">{conversionResult.split('\n').length - 1}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-gray-600 text-xs font-medium">Processing Time</div>
@@ -919,7 +881,7 @@ export default function ConvertPage() {
                       }
                     })
                   ) : (
-                    pageCount > 1 ? pageXmlContent : xmlContent
+                    conversionResult
                   )}
                 </pre>
               </div>

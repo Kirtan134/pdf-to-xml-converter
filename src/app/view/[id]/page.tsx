@@ -45,6 +45,23 @@ interface ConversionStatistics {
   wordCount: number;
 }
 
+type Conversion = {
+  id: string;
+  filename: string;
+  createdAt: string;
+  status: string;
+  pageCount: number;
+  structureType: string;
+  fileSize: number;
+  processingTime: number;
+  convertedXml: string;
+  detectedTables: number;
+  detectedLists: number;
+  detectedHeadings: number;
+  detectedImages: number;
+  metadata: string;
+};
+
 export default function ViewConversionPage() {
   const router = useRouter();
   const params = useParams();
