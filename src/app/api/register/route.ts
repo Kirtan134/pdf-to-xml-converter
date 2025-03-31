@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { User, connectDB } from "@/lib/db";
 import { hash } from "bcrypt";
 import { NextResponse } from "next/server";
 
@@ -16,12 +16,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // Test database connection first
+    // Connect to MongoDB
     try {
-      await prisma.$queryRaw`SELECT 1`;
-      console.log("Database connection successful");
+      await connectDB();
+      console.log("MongoDB connection successful");
     } catch (dbError) {
-      console.error("Database connection error:", dbError);
+      console.error("MongoDB connection error:", dbError);
       return NextResponse.json(
         { 
           error: "Database connection failed",
@@ -33,9 +33,7 @@ export async function POST(req: Request) {
 
     // Check if user exists
     console.log("Checking if user exists");
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       console.log(`User with email ${email} already exists`);
@@ -49,29 +47,21 @@ export async function POST(req: Request) {
     console.log("Hashing password");
     const hashedPassword = await hash(password, 10);
 
-    // Create the user with Prisma
-    console.log("Creating new user with Prisma");
+    // Create the user with MongoDB
+    console.log("Creating new user with MongoDB");
     try {
-      const user = await prisma.user.create({
-        data: {
-          name,
-          email,
-          password: hashedPassword
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          createdAt: true
-        }
+      const user = await User.create({
+        name,
+        email,
+        passwordHash: hashedPassword
       });
 
-      console.log(`User successfully created with ID: ${user.id}`);
+      console.log(`User successfully created with ID: ${user._id}`);
 
       return NextResponse.json(
         {
           user: {
-            id: user.id,
+            id: user._id.toString(),
             name: user.name,
             email: user.email,
           },
@@ -97,8 +87,7 @@ export async function POST(req: Request) {
       stack: error instanceof Error ? error.stack : undefined,
       env: {
         NODE_ENV: process.env.NODE_ENV,
-        hasDatabaseUrl: !!process.env.POSTGRES_PRISMA_URL,
-        hasDirectUrl: !!process.env.POSTGRES_URL_NON_POOLING
+        hasMongoDB: !!process.env.MONGODB_URI
       }
     };
     

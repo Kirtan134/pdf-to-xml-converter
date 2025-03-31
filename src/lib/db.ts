@@ -1,55 +1,39 @@
-import { PrismaClient } from "@prisma/client";
+import mongoose from 'mongoose';
 
-const globalForPrisma = global as unknown as {
-  prisma: PrismaClient | undefined;
-};
+// Connection URI for MongoDB
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pdf-to-xml';
 
-// Initialize Prisma Client with proper configuration for Supabase
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: ["error", "query"],
-  datasources: {
-    db: {
-      url: process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL_NON_POOLING
-    }
-  }
+// Define schemas
+const UserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  passwordHash: { type: String, required: true },
+  role: { type: String, default: 'user' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
-// Create a safe client that doesn't use the global instance
-export const safeClient = new PrismaClient({
-  log: ["error", "query"],
-  datasources: {
-    db: {
-      url: process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL_NON_POOLING
-    }
-  }
-});
+// Create models
+export const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
-// Print database connection info on startup
-console.log('Database connection info:');
-console.log('- Environment:', process.env.NODE_ENV);
-console.log('- Connection URL type:', process.env.POSTGRES_PRISMA_URL ? 'Pooled' : 'Non-pooled');
-
-// Test database connection with retries
-const testConnection = async () => {
+// Database connection
+const connectDB = async () => {
   try {
-    console.log('Testing database connection...');
-    await prisma.$queryRaw`SELECT 1`;
-    console.log('Successfully connected to the database');
+    console.log('Connecting to MongoDB...');
+    if (mongoose.connection.readyState === 1) {
+      console.log('Already connected to MongoDB');
+      return;
+    }
+    
+    await mongoose.connect(MONGODB_URI);
+    console.log('Successfully connected to MongoDB');
   } catch (error) {
-    console.error('Failed to connect to the database:', error);
-    // Log environment variables (without sensitive data)
-    if (process.env.POSTGRES_PRISMA_URL) {
-      console.log('Using pooled URL:', process.env.POSTGRES_PRISMA_URL.substring(0, 20) + '...');
-    }
-    if (process.env.POSTGRES_URL_NON_POOLING) {
-      console.log('Using non-pooled URL:', process.env.POSTGRES_URL_NON_POOLING.substring(0, 20) + '...');
-    }
+    console.error('Failed to connect to MongoDB:', error);
+    process.exit(1);
   }
 };
 
-// Test connection on startup
-testConnection();
+// Initialize connection
+connectDB();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-} 
+export { connectDB };
