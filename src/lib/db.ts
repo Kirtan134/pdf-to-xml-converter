@@ -5,15 +5,17 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pdf-to
 
 // Define schemas
 const UserSchema = new mongoose.Schema({
+  _id: { type: String }, // Allow string IDs
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
   role: { type: String, default: 'user' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
-});
+}, { _id: false }); // Disable automatic ObjectId generation
 
 const ConversionSchema = new mongoose.Schema({
+  _id: { type: String }, // Allow string IDs
   userId: { type: String, required: true },
   filename: { type: String, required: true },
   originalUrl: { type: String, default: "" },
@@ -33,7 +35,7 @@ const ConversionSchema = new mongoose.Schema({
   metadata: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
-});
+}, { _id: false }); // Disable automatic ObjectId generation
 
 // Create models
 export const User = mongoose.models.User || mongoose.model('User', UserSchema);
@@ -75,7 +77,7 @@ export const prisma = {
       const user = await User.findOne(where);
       if (!user) return null;
       return {
-        id: user._id.toString(),
+        id: user._id,
         name: user.name,
         email: user.email,
         password: user.passwordHash,
@@ -86,7 +88,7 @@ export const prisma = {
       await connectDB();
       const users = await User.find({});
       return users.map(user => ({
-        id: user._id.toString(),
+        id: user._id,
         name: user.name,
         email: user.email,
         password: user.passwordHash,
@@ -95,14 +97,20 @@ export const prisma = {
     },
     create: async ({ data }) => {
       await connectDB();
-      const user = await User.create({
+      const userData = {
         name: data.name,
         email: data.email,
         passwordHash: data.password,
-        ...(data.id ? { _id: data.id } : {})
-      });
+      };
+      
+      // If an ID is provided, use it
+      if (data.id) {
+        userData._id = data.id;
+      }
+      
+      const user = await User.create(userData);
       return {
-        id: user._id.toString(),
+        id: user._id,
         name: user.name,
         email: user.email,
         password: user.passwordHash,
@@ -116,7 +124,7 @@ export const prisma = {
       const conversion = await Conversion.findOne(where);
       if (!conversion) return null;
       return {
-        id: conversion._id.toString(),
+        id: conversion._id,
         userId: conversion.userId,
         filename: conversion.filename,
         originalUrl: conversion.originalUrl,
@@ -141,7 +149,7 @@ export const prisma = {
       await connectDB();
       const conversions = await Conversion.find(where || {});
       return conversions.map(conversion => ({
-        id: conversion._id.toString(),
+        id: conversion._id,
         userId: conversion.userId,
         filename: conversion.filename,
         originalUrl: conversion.originalUrl,
@@ -164,59 +172,73 @@ export const prisma = {
     },
     create: async ({ data }) => {
       await connectDB();
+      // Create a new object without the id field
       const conversionData = { ...data };
+      
+      // If an ID is provided, use it as _id
       if (data.id) {
         conversionData._id = data.id;
         delete conversionData.id;
       }
-      const conversion = await Conversion.create(conversionData);
-      return {
-        id: conversion._id.toString(),
-        userId: conversion.userId,
-        filename: conversion.filename,
-        originalUrl: conversion.originalUrl,
-        convertedXml: conversion.convertedXml,
-        status: conversion.status,
-        fileSize: conversion.fileSize,
-        pageCount: conversion.pageCount,
-        structureType: conversion.structureType,
-        processingTime: conversion.processingTime,
-        detectedTables: conversion.detectedTables,
-        detectedLists: conversion.detectedLists,
-        detectedHeadings: conversion.detectedHeadings,
-        detectedImages: conversion.detectedImages,
-        characterCount: conversion.characterCount,
-        wordCount: conversion.wordCount,
-        tags: conversion.tags,
-        metadata: conversion.metadata,
-        createdAt: conversion.createdAt
-      };
+      
+      try {
+        const conversion = await Conversion.create(conversionData);
+        return {
+          id: conversion._id,
+          userId: conversion.userId,
+          filename: conversion.filename,
+          originalUrl: conversion.originalUrl,
+          convertedXml: conversion.convertedXml,
+          status: conversion.status,
+          fileSize: conversion.fileSize,
+          pageCount: conversion.pageCount,
+          structureType: conversion.structureType,
+          processingTime: conversion.processingTime,
+          detectedTables: conversion.detectedTables,
+          detectedLists: conversion.detectedLists,
+          detectedHeadings: conversion.detectedHeadings,
+          detectedImages: conversion.detectedImages,
+          characterCount: conversion.characterCount,
+          wordCount: conversion.wordCount,
+          tags: conversion.tags,
+          metadata: conversion.metadata,
+          createdAt: conversion.createdAt
+        };
+      } catch (error) {
+        console.error('Error creating conversion:', error);
+        throw error;
+      }
     },
     update: async ({ where, data }) => {
       await connectDB();
-      const conversion = await Conversion.findOneAndUpdate(where, data, { new: true });
-      if (!conversion) throw new Error('Conversion not found');
-      return {
-        id: conversion._id.toString(),
-        userId: conversion.userId,
-        filename: conversion.filename,
-        originalUrl: conversion.originalUrl,
-        convertedXml: conversion.convertedXml,
-        status: conversion.status,
-        fileSize: conversion.fileSize,
-        pageCount: conversion.pageCount,
-        structureType: conversion.structureType,
-        processingTime: conversion.processingTime,
-        detectedTables: conversion.detectedTables,
-        detectedLists: conversion.detectedLists,
-        detectedHeadings: conversion.detectedHeadings,
-        detectedImages: conversion.detectedImages,
-        characterCount: conversion.characterCount,
-        wordCount: conversion.wordCount,
-        tags: conversion.tags,
-        metadata: conversion.metadata,
-        createdAt: conversion.createdAt
-      };
+      try {
+        const conversion = await Conversion.findOneAndUpdate(where, data, { new: true });
+        if (!conversion) throw new Error('Conversion not found');
+        return {
+          id: conversion._id,
+          userId: conversion.userId,
+          filename: conversion.filename,
+          originalUrl: conversion.originalUrl,
+          convertedXml: conversion.convertedXml,
+          status: conversion.status,
+          fileSize: conversion.fileSize,
+          pageCount: conversion.pageCount,
+          structureType: conversion.structureType,
+          processingTime: conversion.processingTime,
+          detectedTables: conversion.detectedTables,
+          detectedLists: conversion.detectedLists,
+          detectedHeadings: conversion.detectedHeadings,
+          detectedImages: conversion.detectedImages,
+          characterCount: conversion.characterCount,
+          wordCount: conversion.wordCount,
+          tags: conversion.tags,
+          metadata: conversion.metadata,
+          createdAt: conversion.createdAt
+        };
+      } catch (error) {
+        console.error('Error updating conversion:', error);
+        throw error;
+      }
     }
   },
   $queryRaw: async () => {
