@@ -1,7 +1,6 @@
-import { query } from "@/lib/supabase-db";
+import { prisma } from "@/lib/db";
 import { hash } from "bcrypt";
 import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {
   try {
@@ -19,12 +18,11 @@ export async function POST(req: Request) {
 
     // Check if user exists
     console.log("Checking if user exists");
-    const existingUserResult = await query(
-      `SELECT id FROM "user" WHERE email = $1 LIMIT 1`,
-      [email]
-    );
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
 
-    if (existingUserResult.rows.length > 0) {
+    if (existingUser) {
       console.log(`User with email ${email} already exists`);
       return NextResponse.json(
         { error: "User already exists" },
@@ -35,21 +33,24 @@ export async function POST(req: Request) {
     // Hash the password
     console.log("Hashing password");
     const hashedPassword = await hash(password, 10);
-    const userId = uuidv4();
-    const now = new Date();
-    console.log(`Generated user ID: ${userId}`);
 
-    // Create the user
-    console.log("Creating new user");
+    // Create the user with Prisma
+    console.log("Creating new user with Prisma");
     try {
-      const result = await query(
-        `INSERT INTO "user" (id, email, name, password, "createdAt", "updatedAt") 
-         VALUES ($1, $2, $3, $4, $5, $6) 
-         RETURNING id, email, name, "createdAt"`,
-        [userId, email, name, hashedPassword, now, now]
-      );
+      const user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          createdAt: true
+        }
+      });
 
-      const user = result.rows[0];
       console.log(`User successfully created with ID: ${user.id}`);
 
       return NextResponse.json(

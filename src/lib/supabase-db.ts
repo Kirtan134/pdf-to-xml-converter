@@ -2,18 +2,17 @@ import { Pool } from 'pg';
 
 let pool: Pool | null = null;
 
+// Hard-coded pooler URL as a fallback
+const POOLER_URL = "postgres://postgres.gfebfnogkhikipszbszu:kirtan134@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require";
+
 export const getPool = async () => {
   if (pool) return pool;
   
   try {
-    // Use the environment variable
-    const connectionString = process.env.DATABASE_URL;
+    // Use the environment variable with fallback to hardcoded pooler URL
+    const connectionString = process.env.DATABASE_URL || POOLER_URL;
     
-    if (!connectionString) {
-      throw new Error("Database connection string is not defined");
-    }
-    
-    console.log("Initializing connection to Supabase...");
+    console.log("Initializing connection to Supabase via pooler...");
     
     // Create a new pool
     pool = new Pool({
@@ -28,7 +27,7 @@ export const getPool = async () => {
     
     // Test the connection
     const client = await pool.connect();
-    console.log("Supabase connection successful");
+    console.log("Supabase connection successful via pooler");
     client.release();
     
     // Handle pool errors
