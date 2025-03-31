@@ -1,57 +1,58 @@
-import { prisma } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { safeClient } from "@/lib/db";
 import { hash } from "bcrypt";
+import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { name, email, password } = body;
+    const { name, email, password } = await req.json();
 
-    if (!email || !password) {
+    if (!name || !email || !password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Name, email, and password are required" },
         { status: 400 }
       );
     }
 
     // Check if user exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await safeClient.user.findUnique({
       where: {
         email,
-      },
+      }
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        { error: "User already exists" },
         { status: 409 }
       );
     }
 
-    // Hash password server-side
+    // Hash the password
     const hashedPassword = await hash(password, 10);
 
-    // Create user
-    const user = await prisma.user.create({
+    // Create the user
+    const user = await safeClient.user.create({
       data: {
-        name: name || email.split("@")[0],
+        name,
         email,
-        password: hashedPassword, // Store the hashed password
+        password: hashedPassword,
       },
     });
 
     return NextResponse.json(
       {
-        id: user.id,
-        name: user.name,
-        email: user.email,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
       },
       { status: 201 }
     );
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
-      { error: "Failed to create account" },
+      { error: "Registration failed", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

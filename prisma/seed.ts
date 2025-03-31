@@ -1,29 +1,18 @@
 import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create a test user
-  const password = await hash('password123', 10);
+  console.log('Seeding database...');
   
-  const user = await prisma.user.create({
-    data: {
-      name: 'Test User',
-      email: 'test@example.com',
-      password: password,
-      preferences: JSON.stringify({
-        defaultStructureType: 'enhanced'
-      }),
-    },
-  });
-
-  console.log(`Created user with id: ${user.id}`);
+  // You can add initial seed data here if needed
+  
+  console.log('Database seeding completed.');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {

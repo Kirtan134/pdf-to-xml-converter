@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { safeClient } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -12,12 +12,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await safeClient.user.findUnique({
       where: {
         email,
-      },
-      select: {
-        id: true,
       },
     });
 
@@ -25,7 +22,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error checking if user exists:", error);
     return NextResponse.json(
-      { error: "Failed to check if user exists" },
+      { error: "Failed to check if user exists", exists: false },
       { status: 500 }
     );
   }
