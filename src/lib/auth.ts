@@ -1,7 +1,7 @@
 import { compare } from "bcrypt";
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "./db";
+import { User, connectDB } from "./db";
 
 export const authOptions: AuthOptions = {
   pages: {
@@ -26,30 +26,36 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
+        try {
+          // Connect to MongoDB
+          await connectDB();
+          
+          const user = await User.findOne({
             email: credentials.email,
-          },
-        });
+          });
 
-        if (!user) {
+          if (!user) {
+            return null;
+          }
+
+          const isPasswordValid = await compare(
+            credentials.password,
+            user.passwordHash
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
           return null;
         }
-
-        const isPasswordValid = await compare(
-          credentials.password,
-          user.password!
-        );
-
-        if (!isPasswordValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-        };
       },
     }),
   ],
@@ -73,5 +79,5 @@ export const authOptions: AuthOptions = {
       return token;
     },
   },
-  debug: true,
+  debug: process.env.NODE_ENV !== "production",
 }; 
