@@ -4,10 +4,10 @@
   "framework": "nextjs",
   "outputDirectory": ".next",
   "env": {
-    "DATABASE_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres",
-    "POSTGRES_PRISMA_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres",
-    "POSTGRES_URL_NON_POOLING": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres",
-    "DIRECT_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres",
+    "DATABASE_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require&pgbouncer=true",
+    "POSTGRES_PRISMA_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require&pgbouncer=true",
+    "POSTGRES_URL_NON_POOLING": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require",
+    "DIRECT_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require",
     "NEXTAUTH_URL": "https://pdf-to-xml-converter-xi.vercel.app",
     "NEXTAUTH_SECRET": "a5c1bb7056001203a87b495ffeaa79df"
   }

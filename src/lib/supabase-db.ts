@@ -19,7 +19,7 @@ export const getPool = async () => {
     pool = new Pool({
       connectionString,
       ssl: {
-        rejectUnauthorized: false // Required for some SSL connections
+        rejectUnauthorized: false // Required for Vercel-to-Supabase connections
       },
       max: 20, // Maximum number of clients in the pool
       idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
