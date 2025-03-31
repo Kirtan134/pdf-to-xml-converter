@@ -124,19 +124,32 @@ export async function POST(req: Request) {
     const fileSize = file.size;
     const fileName = file.name;
     
-    const pendingConversion = await prisma.conversion.create({
-      data: {
-        id: conversionId,
-        userId: user.id,
-        filename: fileName,
-        originalUrl: "",  // Will be updated later
-        convertedXml: "",  // Will be updated later
-        status: "PENDING",
-        fileSize,
-        pageCount: 0,
-        structureType,
-      },
-    });
+    try {
+      console.log("Creating conversion record with ID:", conversionId);
+      const pendingConversion = await prisma.conversion.create({
+        data: {
+          id: conversionId,
+          userId: user.id,
+          filename: fileName,
+          originalUrl: "",  // Will be updated later
+          convertedXml: "",  // Will be updated later
+          status: "PENDING",
+          fileSize,
+          pageCount: 0,
+          structureType,
+        },
+      });
+      console.log("Created conversion record successfully");
+    } catch (createError) {
+      console.error("Failed to create conversion record:", createError);
+      return NextResponse.json(
+        { 
+          error: "Failed to create conversion record",
+          details: createError instanceof Error ? createError.message : String(createError)
+        },
+        { status: 500 }
+      );
+    }
 
     // Create temporary file
     const tempFilePath = path.join(os.tmpdir(), file.name);
@@ -145,13 +158,19 @@ export async function POST(req: Request) {
     await writeFile(tempFilePath, buffer);
     
     // Update conversion status to PROCESSING
-    await prisma.conversion.update({
-      where: { id: conversionId },
-      data: { 
-        status: "PROCESSING",
-        originalUrl: tempFilePath
-      }
-    });
+    try {
+      await prisma.conversion.update({
+        where: { id: conversionId },
+        data: { 
+          status: "PROCESSING",
+          originalUrl: tempFilePath
+        }
+      });
+      console.log("Updated conversion status to PROCESSING for ID:", conversionId);
+    } catch (updateError) {
+      console.error("Failed to update conversion to PROCESSING:", updateError);
+      // Continue with the conversion despite the error
+    }
 
     // Parse PDF to get content
     const pdfParser = new PDFParser();
@@ -231,47 +250,74 @@ export async function POST(req: Request) {
     });
 
     // Update conversion with results
-    const conversion = await prisma.conversion.update({
-      where: { id: conversionId },
-      data: {
-        convertedXml: xmlContent,
+    try {
+      console.log("Updating conversion with final results for ID:", conversionId);
+      const conversion = await prisma.conversion.update({
+        where: { id: conversionId },
+        data: {
+          convertedXml: xmlContent,
+          pageCount,
+          status: "COMPLETED",
+          processingTime,
+          detectedTables,
+          detectedLists,
+          detectedHeadings,
+          detectedImages,
+          characterCount,
+          wordCount,
+          tags,
+          metadata,
+        },
+      });
+
+      // Cleanup temp file
+      await unlink(tempFilePath).catch(() => {});
+
+      return NextResponse.json({
+        success: true,
+        conversionId: conversion.id,
+        xml: xmlContent,
         pageCount,
-        status: "COMPLETED",
-        processingTime,
-        detectedTables,
-        detectedLists,
-        detectedHeadings,
-        detectedImages,
-        characterCount,
-        wordCount,
-        tags,
-        metadata,
-      },
-    });
-
-    // Cleanup temp file
-    await unlink(tempFilePath).catch(() => {});
-
-    return NextResponse.json({
-      success: true,
-      conversionId: conversion.id,
-      xml: xmlContent,
-      pageCount,
-      structureType,
-      statistics: {
-        detectedTables,
-        detectedLists,
-        detectedHeadings,
-        detectedImages,
-        processingTime,
-        characterCount,
-        wordCount,
-      }
-    });
+        structureType,
+        statistics: {
+          detectedTables,
+          detectedLists,
+          detectedHeadings,
+          detectedImages,
+          processingTime,
+          characterCount,
+          wordCount,
+        }
+      });
+    } catch (updateError) {
+      console.error("Failed to update conversion with results:", updateError);
+      
+      // Return the XML even if we couldn't update the conversion record
+      return NextResponse.json({
+        success: true,
+        conversionId: conversionId,
+        xml: xmlContent,
+        pageCount,
+        structureType,
+        warning: "Failed to save conversion details",
+        statistics: {
+          detectedTables,
+          detectedLists,
+          detectedHeadings,
+          detectedImages,
+          processingTime,
+          characterCount,
+          wordCount,
+        }
+      });
+    }
   } catch (error) {
     console.error("Conversion error:", error);
     return NextResponse.json(
-      { error: "Failed to convert PDF to XML" },
+      { 
+        error: "Failed to convert PDF to XML",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }

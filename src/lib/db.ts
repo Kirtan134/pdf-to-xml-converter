@@ -177,12 +177,17 @@ export const prisma = {
       
       // If an ID is provided, use it as _id
       if (data.id) {
+        console.log('Creating conversion with ID:', data.id);
         conversionData._id = data.id;
         delete conversionData.id;
       }
       
+      console.log('Creating conversion with data:', JSON.stringify(conversionData));
+      
       try {
         const conversion = await Conversion.create(conversionData);
+        console.log('Conversion created successfully with ID:', conversion._id);
+        
         return {
           id: conversion._id,
           userId: conversion.userId,
@@ -212,8 +217,31 @@ export const prisma = {
     update: async ({ where, data }) => {
       await connectDB();
       try {
-        const conversion = await Conversion.findOneAndUpdate(where, data, { new: true });
-        if (!conversion) throw new Error('Conversion not found');
+        console.log('Updating conversion with where:', JSON.stringify(where));
+        
+        // Handle ID specifically in the where clause
+        const whereClause = { ...where };
+        if (where.id) {
+          whereClause._id = where.id;
+          delete whereClause.id;
+        }
+        
+        console.log('Modified where clause:', JSON.stringify(whereClause));
+        
+        const conversion = await Conversion.findOneAndUpdate(whereClause, data, { new: true });
+        
+        if (!conversion) {
+          console.error('Conversion not found with where clause:', JSON.stringify(whereClause));
+          
+          // Try to find the document to check if it exists
+          const existingDoc = await Conversion.findOne(whereClause);
+          console.log('Existing document check:', existingDoc ? 'Found' : 'Not found');
+          
+          throw new Error('Conversion not found');
+        }
+        
+        console.log('Conversion updated successfully');
+        
         return {
           id: conversion._id,
           userId: conversion.userId,
