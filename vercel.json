@@ -1,5 +1,9 @@
 {
-  "buildCommand": "prisma generate && prisma db push --accept-data-loss && next build",
+  "buildCommand": "npm run vercel-build",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "env": {
+    "POSTGRES_PRISMA_URL": "${env.DATABASE_URL}",
+    "POSTGRES_URL_NON_POOLING": "${env.DATABASE_URL}"
+  }
 } 
