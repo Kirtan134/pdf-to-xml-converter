@@ -1,13 +1,13 @@
 {
-  "buildCommand": "prisma generate && next build",
+  "buildCommand": "node vercel-build.js",
   "installCommand": "npm install",
   "framework": "nextjs",
   "outputDirectory": ".next",
   "env": {
-    "DATABASE_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require&pgbouncer=true",
-    "POSTGRES_PRISMA_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require&pgbouncer=true",
-    "POSTGRES_URL_NON_POOLING": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require",
+    "DATABASE_URL": "postgres://postgres.gfebfnogkhikipszbszu:kirtan134@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require",
     "DIRECT_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require",
+    "POSTGRES_PRISMA_URL": "postgres://postgres.gfebfnogkhikipszbszu:kirtan134@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require",
+    "POSTGRES_URL_NON_POOLING": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require",
     "NEXTAUTH_URL": "https://pdf-to-xml-converter-xi.vercel.app",
     "NEXTAUTH_SECRET": "a5c1bb7056001203a87b495ffeaa79df"
   }
