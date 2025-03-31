@@ -14,7 +14,7 @@ export async function GET() {
     
     // Insert the user directly with SQL
     const result = await query(
-      `INSERT INTO "User" (id, email, name, password, "createdAt", "updatedAt") 
+      `INSERT INTO "user" (id, email, name, password, "createdAt", "updatedAt") 
        VALUES ($1, $2, $3, $4, $5, $6) 
        RETURNING id, email, name, "createdAt"`,
       [uuidv4(), email, `Test User ${uniqueId}`, password, new Date(), new Date()]

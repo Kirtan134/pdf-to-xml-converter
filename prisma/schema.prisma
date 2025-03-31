@@ -24,6 +24,8 @@ model User {
   preferences   String?       // JSON string of user preferences
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@map("user")
 }
 
 model Account {
@@ -45,6 +47,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@map("account")
 }
 
 model Session {
@@ -53,6 +56,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
 }
 
 model VerificationToken {
@@ -61,6 +66,7 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@map("verificationtoken")
 }
 
 model Conversion {
@@ -87,6 +93,8 @@ model Conversion {
   wordCount         Int               @default(0)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("conversion")
 }
 
 enum ConversionStatus {

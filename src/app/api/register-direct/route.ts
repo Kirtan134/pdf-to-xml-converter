@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
     // Check if user exists
     const existingUserResult = await query(
-      `SELECT id FROM "user" WHERE email = $1 LIMIT 1`,
+      `SELECT id FROM "User" WHERE email = $1 LIMIT 1`,
       [email]
     );
 
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     // Create the user
     const result = await query(
-      `INSERT INTO "user" (id, email, name, password, "createdAt", "updatedAt") 
+      `INSERT INTO "User" (id, email, name, password, "createdAt", "updatedAt") 
        VALUES ($1, $2, $3, $4, $5, $6) 
        RETURNING id, email, name, "createdAt"`,
       [userId, email, name, hashedPassword, now, now]
@@ -56,8 +56,9 @@ export async function POST(req: Request) {
     console.error("Registration error:", error);
     return NextResponse.json(
       { 
-        error: "Failed to register user",
-        details: error instanceof Error ? error.message : String(error)
+        error: "Registration failed", 
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       },
       { status: 500 }
     );
