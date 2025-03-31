@@ -1,39 +1,33 @@
-import { PrismaClient } from "@prisma/client";
+import { safeClient } from "@/lib/db";
+import { query } from "@/lib/supabase-db";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  let connection = false;
-  let error = null;
-  
+  const response = {
+    prisma: { success: false, message: "" },
+    direct: { success: false, message: "" },
+  };
+
+  // Test Prisma connection
   try {
-    // Use a dedicated client for testing
-    const prisma = new PrismaClient();
-    
-    console.log("Testing database connection to Supabase...");
-    
-    // Try to connect
-    await prisma.$connect();
-    console.log("Connected to Supabase database");
-    
-    // Try a simple query
-    const count = await prisma.user.count();
-    console.log(`Database connection successful. User count: ${count}`);
-    
-    // Disconnect properly
-    await prisma.$disconnect();
-    connection = true;
-  } catch (e) {
-    console.error("Database connection test failed:", e);
-    error = e instanceof Error ? e.message : String(e);
+    await safeClient.$connect();
+    response.prisma.success = true;
+    response.prisma.message = "Prisma connection successful";
+  } catch (error) {
+    response.prisma.success = false;
+    response.prisma.message = error instanceof Error ? error.message : String(error);
   }
-  
-  return NextResponse.json({
-    success: connection,
-    message: connection ? "Connected successfully to Supabase" : "Failed to connect to Supabase",
-    error,
-    env: {
-      database_url_masked: process.env.DATABASE_URL?.replace(/:[^:]*@/, ":*****@"),
-      node_env: process.env.NODE_ENV,
-    }
-  });
+
+  // Test direct database connection
+  try {
+    const result = await query('SELECT NOW() as time');
+    response.direct.success = true;
+    response.direct.message = "Direct connection successful";
+    response.direct.time = result.rows[0].time;
+  } catch (error) {
+    response.direct.success = false;
+    response.direct.message = error instanceof Error ? error.message : String(error);
+  }
+
+  return NextResponse.json(response);
 } 

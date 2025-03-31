@@ -57,82 +57,75 @@ export default function RegisterTestPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6 text-center">Test Registration</h1>
+    <div className="max-w-md mx-auto mt-8 p-4">
+      <h1 className="text-2xl font-bold mb-6">Test Registration</h1>
       
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-red-100 text-red-700 p-3 mb-4 rounded">
           {error}
         </div>
       )}
       
       {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <div className="bg-green-100 text-green-700 p-3 mb-4 rounded">
           {success}
         </div>
       )}
       
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow">
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-            Name
-          </label>
+          <label htmlFor="name" className="block mb-2 font-medium">Name</label>
           <input
             type="text"
             id="name"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className="w-full p-2 border rounded"
             required
           />
         </div>
         
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-            Email
-          </label>
+          <label htmlFor="email" className="block mb-2 font-medium">Email</label>
           <input
             type="email"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className="w-full p-2 border rounded"
             required
           />
         </div>
         
         <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-            Password
-          </label>
+          <label htmlFor="password" className="block mb-2 font-medium">Password</label>
           <input
             type="password"
             id="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+            className="w-full p-2 border rounded"
             required
+            minLength={8}
           />
         </div>
         
-        <div className="flex items-center justify-between">
-          <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Registering...' : 'Register'}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded disabled:opacity-50"
+        >
+          {isLoading ? 'Registering...' : 'Register'}
+        </button>
       </form>
-
+      
       {response && (
-        <div className="mt-4 p-4 bg-gray-100 rounded">
-          <h3 className="font-bold">Response:</h3>
-          <pre className="mt-2 text-xs overflow-auto whitespace-pre-wrap">
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-2">API Response:</h2>
+          <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-80 text-sm">
             {JSON.stringify(response, null, 2)}
           </pre>
         </div>
