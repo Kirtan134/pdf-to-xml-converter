@@ -16,6 +16,11 @@ export const prisma = globalForPrisma.prisma ??
     try {
       const client = new PrismaClient({
         log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+        datasources: {
+          db: {
+            url: process.env.DATABASE_URL,
+          },
+        },
       });
       
       // Test the connection
@@ -24,14 +29,21 @@ export const prisma = globalForPrisma.prisma ??
           console.log("Database connection successful");
         })
         .catch((error) => {
-          console.error("Database connection failed, using mock database:", error);
-          return mockPrisma;
+          console.error("Database connection failed:", error);
+          if (process.env.NODE_ENV !== "production") {
+            console.log("Using mock database for development");
+            return mockPrisma;
+          }
         });
       
       return client;
     } catch (error) {
-      console.error("Failed to initialize Prisma Client, using mock database:", error);
-      return mockPrisma;
+      console.error("Failed to initialize Prisma Client:", error);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Using mock database for development");
+        return mockPrisma;
+      }
+      throw error;
     }
   })();
 
@@ -40,11 +52,12 @@ const withRecovery = async (operation: Function, fallback: any = null) => {
   try {
     return await operation();
   } catch (error) {
-    console.error("Database operation failed, using mock database:", error);
-    if (process.env.NODE_ENV === "production") {
-      throw error; // Re-throw in production
+    console.error("Database operation failed:", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Using mock database for development");
+      return fallback;
     }
-    return fallback;
+    throw error;
   }
 };
 
