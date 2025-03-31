@@ -15,10 +15,22 @@ const UserSchema = new mongoose.Schema({
 
 const ConversionSchema = new mongoose.Schema({
   userId: { type: String, required: true },
-  originalFileName: { type: String, required: true },
-  status: { type: String, default: 'pending' },
-  pdfUrl: { type: String, required: true },
-  xmlUrl: { type: String },
+  filename: { type: String, required: true },
+  originalUrl: { type: String, default: "" },
+  convertedXml: { type: String, default: "" },
+  status: { type: String, default: "PENDING" },
+  fileSize: { type: Number, default: 0 },
+  pageCount: { type: Number, default: 0 },
+  structureType: { type: String, default: "enhanced" },
+  processingTime: { type: Number },
+  detectedTables: { type: Number, default: 0 },
+  detectedLists: { type: Number, default: 0 },
+  detectedHeadings: { type: Number, default: 0 },
+  detectedImages: { type: Number, default: 0 },
+  characterCount: { type: Number, default: 0 },
+  wordCount: { type: Number, default: 0 },
+  tags: { type: String },
+  metadata: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -55,28 +67,45 @@ if (process.env.NODE_ENV !== 'production') {
   connectDB();
 }
 
-// Legacy compatibility - Stub Prisma client for backward compatibility
+// Prisma compatibility layer for existing routes
 export const prisma = {
   user: {
     findUnique: async ({ where }) => {
       await connectDB();
-      return User.findOne(where);
+      const user = await User.findOne(where);
+      if (!user) return null;
+      return {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        password: user.passwordHash,
+        createdAt: user.createdAt
+      };
     },
     findMany: async () => {
       await connectDB();
-      return User.find({});
+      const users = await User.find({});
+      return users.map(user => ({
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        password: user.passwordHash,
+        createdAt: user.createdAt
+      }));
     },
     create: async ({ data }) => {
       await connectDB();
       const user = await User.create({
         name: data.name,
         email: data.email,
-        passwordHash: data.password
+        passwordHash: data.password,
+        ...(data.id ? { _id: data.id } : {})
       });
       return {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
+        password: user.passwordHash,
         createdAt: user.createdAt
       };
     }
@@ -84,35 +113,108 @@ export const prisma = {
   conversion: {
     findUnique: async ({ where }) => {
       await connectDB();
-      return Conversion.findOne(where);
-    },
-    findMany: async ({ where }) => {
-      await connectDB();
-      return Conversion.find(where || {});
-    },
-    create: async ({ data }) => {
-      await connectDB();
-      const conversion = await Conversion.create(data);
+      const conversion = await Conversion.findOne(where);
+      if (!conversion) return null;
       return {
         id: conversion._id.toString(),
         userId: conversion.userId,
-        originalFileName: conversion.originalFileName,
+        filename: conversion.filename,
+        originalUrl: conversion.originalUrl,
+        convertedXml: conversion.convertedXml,
         status: conversion.status,
-        pdfUrl: conversion.pdfUrl,
-        xmlUrl: conversion.xmlUrl,
+        fileSize: conversion.fileSize,
+        pageCount: conversion.pageCount,
+        structureType: conversion.structureType,
+        processingTime: conversion.processingTime,
+        detectedTables: conversion.detectedTables,
+        detectedLists: conversion.detectedLists,
+        detectedHeadings: conversion.detectedHeadings,
+        detectedImages: conversion.detectedImages,
+        characterCount: conversion.characterCount,
+        wordCount: conversion.wordCount,
+        tags: conversion.tags,
+        metadata: conversion.metadata,
+        createdAt: conversion.createdAt
+      };
+    },
+    findMany: async ({ where } = {}) => {
+      await connectDB();
+      const conversions = await Conversion.find(where || {});
+      return conversions.map(conversion => ({
+        id: conversion._id.toString(),
+        userId: conversion.userId,
+        filename: conversion.filename,
+        originalUrl: conversion.originalUrl,
+        convertedXml: conversion.convertedXml,
+        status: conversion.status,
+        fileSize: conversion.fileSize,
+        pageCount: conversion.pageCount,
+        structureType: conversion.structureType,
+        processingTime: conversion.processingTime,
+        detectedTables: conversion.detectedTables,
+        detectedLists: conversion.detectedLists,
+        detectedHeadings: conversion.detectedHeadings,
+        detectedImages: conversion.detectedImages,
+        characterCount: conversion.characterCount,
+        wordCount: conversion.wordCount,
+        tags: conversion.tags,
+        metadata: conversion.metadata,
+        createdAt: conversion.createdAt
+      }));
+    },
+    create: async ({ data }) => {
+      await connectDB();
+      const conversionData = { ...data };
+      if (data.id) {
+        conversionData._id = data.id;
+        delete conversionData.id;
+      }
+      const conversion = await Conversion.create(conversionData);
+      return {
+        id: conversion._id.toString(),
+        userId: conversion.userId,
+        filename: conversion.filename,
+        originalUrl: conversion.originalUrl,
+        convertedXml: conversion.convertedXml,
+        status: conversion.status,
+        fileSize: conversion.fileSize,
+        pageCount: conversion.pageCount,
+        structureType: conversion.structureType,
+        processingTime: conversion.processingTime,
+        detectedTables: conversion.detectedTables,
+        detectedLists: conversion.detectedLists,
+        detectedHeadings: conversion.detectedHeadings,
+        detectedImages: conversion.detectedImages,
+        characterCount: conversion.characterCount,
+        wordCount: conversion.wordCount,
+        tags: conversion.tags,
+        metadata: conversion.metadata,
         createdAt: conversion.createdAt
       };
     },
     update: async ({ where, data }) => {
       await connectDB();
       const conversion = await Conversion.findOneAndUpdate(where, data, { new: true });
+      if (!conversion) throw new Error('Conversion not found');
       return {
         id: conversion._id.toString(),
         userId: conversion.userId,
-        originalFileName: conversion.originalFileName,
+        filename: conversion.filename,
+        originalUrl: conversion.originalUrl,
+        convertedXml: conversion.convertedXml,
         status: conversion.status,
-        pdfUrl: conversion.pdfUrl,
-        xmlUrl: conversion.xmlUrl,
+        fileSize: conversion.fileSize,
+        pageCount: conversion.pageCount,
+        structureType: conversion.structureType,
+        processingTime: conversion.processingTime,
+        detectedTables: conversion.detectedTables,
+        detectedLists: conversion.detectedLists,
+        detectedHeadings: conversion.detectedHeadings,
+        detectedImages: conversion.detectedImages,
+        characterCount: conversion.characterCount,
+        wordCount: conversion.wordCount,
+        tags: conversion.tags,
+        metadata: conversion.metadata,
         createdAt: conversion.createdAt
       };
     }
@@ -127,3 +229,4 @@ export const prisma = {
 export const safeClient = prisma;
 
 export { connectDB };
+
