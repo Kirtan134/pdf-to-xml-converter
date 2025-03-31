@@ -16,6 +16,21 @@ export async function POST(req: Request) {
       );
     }
 
+    // Test database connection first
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      console.log("Database connection successful");
+    } catch (dbError) {
+      console.error("Database connection error:", dbError);
+      return NextResponse.json(
+        { 
+          error: "Database connection failed",
+          details: dbError instanceof Error ? dbError.message : String(dbError)
+        },
+        { status: 500 }
+      );
+    }
+
     // Check if user exists
     console.log("Checking if user exists");
     const existingUser = await prisma.user.findUnique({
@@ -65,14 +80,34 @@ export async function POST(req: Request) {
       );
     } catch (insertError) {
       console.error("Error inserting user:", insertError);
+      if (insertError instanceof Error) {
+        console.error("Error name:", insertError.name);
+        console.error("Error message:", insertError.message);
+        console.error("Error stack:", insertError.stack);
+      }
       throw insertError;
     }
   } catch (error) {
     console.error("Registration error:", error);
+    
+    // Log detailed error information
+    const errorDetails = {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        hasDatabaseUrl: !!process.env.POSTGRES_PRISMA_URL,
+        hasDirectUrl: !!process.env.POSTGRES_URL_NON_POOLING
+      }
+    };
+    
+    console.error("Error details:", errorDetails);
+    
     return NextResponse.json(
       { 
         error: "Failed to register user",
-        details: error instanceof Error ? error.message : String(error)
+        details: errorDetails
       },
       { status: 500 }
     );
