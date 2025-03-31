@@ -2,7 +2,7 @@
 const nextConfig = {
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000", "localhost:3001"],
+      allowedOrigins: ["localhost:3000", "localhost:3001", "pdf-to-xml-converter-xi.vercel.app"],
     },
   },
   typescript: {
@@ -14,6 +14,12 @@ const nextConfig = {
   eslint: {
     // Turning off ESLint for now to fix build
     ignoreDuringBuilds: true,
+  },
+  // Ensure proper handling of root route
+  output: 'standalone',
+  // Add proper image domains
+  images: {
+    domains: ['localhost', 'pdf-to-xml-converter-xi.vercel.app'],
   },
 };
 
