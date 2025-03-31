@@ -6,12 +6,14 @@ export const getPool = async () => {
   if (pool) return pool;
   
   try {
-    // Parse the connection string
+    // Use the environment variable
     const connectionString = process.env.DATABASE_URL;
     
     if (!connectionString) {
-      throw new Error("DATABASE_URL is not defined");
+      throw new Error("Database connection string is not defined");
     }
+    
+    console.log("Initializing connection to Supabase...");
     
     // Create a new pool
     pool = new Pool({

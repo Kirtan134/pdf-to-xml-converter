@@ -14,13 +14,9 @@ if (!process.env.DATABASE_URL) {
 export const prisma = globalForPrisma.prisma ?? 
   (() => {
     try {
+      console.log("Initializing Prisma with DATABASE_URL...");
       const client = new PrismaClient({
         log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-        datasources: {
-          db: {
-            url: process.env.DATABASE_URL,
-          },
-        },
       });
       
       // Test the connection
@@ -111,4 +107,6 @@ export const safeClient = {
   ),
 };
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma; 
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+} 

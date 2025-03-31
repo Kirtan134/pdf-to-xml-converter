@@ -1,9 +1,14 @@
 {
-  "buildCommand": "npm run vercel-build",
+  "buildCommand": "prisma generate && next build",
   "installCommand": "npm install",
   "framework": "nextjs",
+  "outputDirectory": ".next",
   "env": {
-    "POSTGRES_PRISMA_URL": "${env.DATABASE_URL}",
-    "POSTGRES_URL_NON_POOLING": "${env.DATABASE_URL}"
+    "DATABASE_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres",
+    "POSTGRES_PRISMA_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres",
+    "POSTGRES_URL_NON_POOLING": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres",
+    "DIRECT_URL": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres",
+    "NEXTAUTH_URL": "https://pdf-to-xml-converter-xi.vercel.app",
+    "NEXTAUTH_SECRET": "a5c1bb7056001203a87b495ffeaa79df"
   }
 } 
