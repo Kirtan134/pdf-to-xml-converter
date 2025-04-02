@@ -3,12 +3,7 @@
 # dependencies
 /node_modules
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp.js
 
 # testing
 /coverage
@@ -16,6 +11,7 @@
 # next.js
 /.next/
 /out/
+/.swc/
 
 # production
 /build
@@ -30,8 +26,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# environment variables
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # vercel
 .vercel
@@ -39,3 +40,34 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Prisma
+/prisma/.env
+/.prisma/
+
+# IDE/Editor folders
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# PDF files and temp storage
+/public/uploads/
+/tmp/
+*.pdf
+
+# Generated files
+/public/conversions/
+
+# Logs
+logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
