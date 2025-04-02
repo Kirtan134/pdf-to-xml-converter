@@ -21,6 +21,11 @@ const nextConfig = {
   images: {
     domains: ['localhost', 'pdf-to-xml-converter-xi.vercel.app'],
   },
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // Increase as needed
+    }
+  }
 };
 
 module.exports = nextConfig; 
