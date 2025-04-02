@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import NextAuthProvider from "@/components/NextAuthProvider";
+import AuthSessionProvider from "@/components/SessionProvider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -18,13 +18,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <NextAuthProvider>
-          <div className="min-h-screen bg-gray-50">
+      <body className={`${inter.className} text-black`}>
+        <div className="min-h-screen bg-gray-50">
+          <AuthSessionProvider>
             <Header />
             <main className="container mx-auto py-8 px-4">{children}</main>
-          </div>
-        </NextAuthProvider>
+          </AuthSessionProvider>
+        </div>
       </body>
     </html>
   );

@@ -7,8 +7,7 @@
   "regions": ["iad1"],
   "env": {
     "NODE_ENV": "production",
-    "POSTGRES_PRISMA_URL": "postgres://postgres.gfebfnogkhikipszbszu:kirtan134@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require",
-    "POSTGRES_URL_NON_POOLING": "postgresql://postgres:kirtan134@db.gfebfnogkhikipszbszu.supabase.co:5432/postgres?sslmode=require",
+    "DATABASE_URL": "postgresql://database_owner:npg_9OKTHrbVLdk5@ep-late-resonance-a5xt0z5c-pooler.us-east-2.aws.neon.tech/database?sslmode=require",
     "NEXTAUTH_URL": "https://pdf-to-xml-converter-xi.vercel.app",
     "NEXTAUTH_SECRET": "a5c1bb7056001203a87b495ffeaa79df"
   },

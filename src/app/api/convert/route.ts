@@ -1,4 +1,3 @@
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hash } from "bcrypt";
 import { unlink, writeFile } from "fs/promises";
@@ -60,15 +59,6 @@ export async function POST(req: Request) {
   const startTime = Date.now();
   
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const structureType = (formData.get("structureType") as string) || "enhanced";
@@ -80,38 +70,41 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if user exists in the database and create if needed
-    const email = session.user.email;
-    
-    if (!email) {
+    // File size validation - limit to 50MB
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "User email required" },
+        { error: `File size exceeds the maximum limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB` },
         { status: 400 }
       );
     }
+
+    // Use a default demo user
+    const email = "demo@example.com";
+    const userName = "Demo User";
     
-    // Look up user by email
+    // Look up user by email or create a default one
     let user = await prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      // User doesn't exist in the database, create a temporary user record
-      const hashedPassword = await hash("temporary-password", 10);
-      const userId = session.user.id || uuidv4();
+      // User doesn't exist in the database, create a default user record
+      const hashedPassword = await hash("demo-password", 10);
+      const userId = uuidv4();
       
       try {
         user = await prisma.user.create({
           data: {
             id: userId,
             email,
-            name: session.user.name || "User",
+            name: userName,
             password: hashedPassword,
           },
         });
-        console.log("Created user record for:", email);
+        console.log("Created demo user record");
       } catch (error) {
-        console.error("Failed to create user:", error);
+        console.error("Failed to create demo user:", error);
         return NextResponse.json(
           { error: "User account issue" },
           { status: 500 }
@@ -176,12 +169,51 @@ export async function POST(req: Request) {
     const pdfParser = new PDFParser();
     
     const pdfData = await new Promise<PDFData>((resolve, reject) => {
+      // Add timeout to prevent hanging on large files
+      const timeout = setTimeout(() => {
+        reject(new Error("PDF parsing timed out. The file may be too large or complex."));
+      }, 120000); // 2 minute timeout
+      
       pdfParser.on("pdfParser_dataError", (error) => {
+        clearTimeout(timeout);
         console.error("PDF parsing error:", error);
         reject(error);
       });
-      pdfParser.on("pdfParser_dataReady", resolve);
-      pdfParser.loadPDF(tempFilePath);
+      
+      pdfParser.on("pdfParser_dataReady", (data) => {
+        clearTimeout(timeout);
+        resolve(data);
+      });
+      
+      try {
+        pdfParser.loadPDF(tempFilePath);
+      } catch (error) {
+        clearTimeout(timeout);
+        console.error("PDF load error:", error);
+        reject(error);
+      }
+    }).catch(async (error) => {
+      // Clean up temp file in case of error
+      try {
+        await unlink(tempFilePath);
+      } catch (unlinkError) {
+        console.error("Failed to remove temp file:", unlinkError);
+      }
+      
+      // Update conversion status to ERROR
+      try {
+        await prisma.conversion.update({
+          where: { id: conversionId },
+          data: { 
+            status: "ERROR",
+            processingTime: Date.now() - startTime
+          }
+        });
+      } catch (updateError) {
+        console.error("Failed to update conversion status:", updateError);
+      }
+      
+      throw error;
     });
 
     // Statistics tracking

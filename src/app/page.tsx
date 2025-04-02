@@ -1,11 +1,6 @@
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth";
 import Link from "next/link";
 
-export default async function Home() {
-  const session = await getServerSession(authOptions);
-  const isAuthenticated = !!session;
-
+export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <h1 className="text-4xl font-bold text-center mb-6 text-gray-900">
@@ -41,29 +36,12 @@ export default async function Home() {
         </div>
       </div>
 
-      {isAuthenticated ? (
-        <Link
-          href="/convert"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md text-lg transition-colors"
-        >
-          Convert Your PDF
-        </Link>
-      ) : (
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link
-            href="/login"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md text-lg transition-colors"
-          >
-            Login
-          </Link>
-          <Link
-            href="/register"
-            className="bg-white hover:bg-gray-100 text-blue-600 font-semibold py-3 px-8 rounded-md text-lg border border-blue-600 transition-colors"
-          >
-            Register
-          </Link>
-        </div>
-      )}
+      <Link
+        href="/convert"
+        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-md text-lg transition-colors"
+      >
+        Convert Your PDF
+      </Link>
     </div>
   );
 }

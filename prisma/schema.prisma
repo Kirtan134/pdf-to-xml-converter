@@ -1,38 +1,33 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
   output          = "../node_modules/.prisma/client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
-  provider     = "postgresql"
-  url          = env("POSTGRES_PRISMA_URL")
-  directUrl    = env("POSTGRES_URL_NON_POOLING")
-  relationMode = "foreignKeys"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String        @id @default(cuid())
+  id            String       @id @default(uuid())
   name          String?
-  email         String        @unique
+  email         String       @unique
   emailVerified DateTime?
   password      String?
   image         String?
+  preferences   String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   accounts      Account[]
-  sessions      Session[]
   conversions   Conversion[]
-  preferences   String?       // JSON string of user preferences
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  sessions      Session[]
 
   @@map("user")
 }
 
 model Account {
-  id                 String   @id @default(cuid())
+  id                 String  @id @default(cuid())
   userId             String
   type               String
   provider           String
@@ -46,8 +41,7 @@ model Account {
   session_state      String?
   oauth_token_secret String?
   oauth_token        String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("account")
@@ -73,29 +67,27 @@ model VerificationToken {
 }
 
 model Conversion {
-  id                String            @id @default(cuid())
-  userId            String
-  filename          String
-  originalUrl       String            // URL to the original PDF file
-  convertedXml      String            // The converted XML content
-  pageCount         Int               @default(1)
-  structureType     String            @default("enhanced")
-  detectedTables    Int               @default(0)  // Number of tables detected
-  detectedLists     Int               @default(0)  // Number of lists detected
-  detectedHeadings  Int               @default(0)  // Number of headings detected
-  detectedImages    Int               @default(0)  // Number of images detected
-  status            ConversionStatus  @default(COMPLETED)
-  processingTime    Int?              // Processing time in milliseconds
-  fileSize          Int?              // Original file size in bytes
-  tags              String?           // JSON array of tags for searching
-  metadata          String?           // JSON string of metadata from PDF
-  createdAt         DateTime          @default(now())
-  
-  // Tracking conversion statistics
-  characterCount    Int               @default(0)
-  wordCount         Int               @default(0)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String           @id @default(uuid())
+  userId           String
+  filename         String
+  originalUrl      String
+  convertedXml     String
+  pageCount        Int              @default(1)
+  structureType    String           @default("enhanced")
+  detectedTables   Int              @default(0)
+  detectedLists    Int              @default(0)
+  detectedHeadings Int              @default(0)
+  detectedImages   Int              @default(0)
+  status           ConversionStatus @default(COMPLETED)
+  processingTime   Int?
+  fileSize         Int?
+  tags             String?
+  metadata         String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  characterCount   Int              @default(0)
+  wordCount        Int              @default(0)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("conversion")
 }
@@ -105,4 +97,4 @@ enum ConversionStatus {
   PROCESSING
   COMPLETED
   FAILED
-} 
+}
