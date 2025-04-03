@@ -33,7 +33,7 @@ A modern web application that converts PDF documents to structured XML format wi
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/pdf-to-xml-converter.git
+   git clone https://github.com/Kirtan134/pdf-to-xml-converter.git
    cd pdf-to-xml-converter
    ```
 
