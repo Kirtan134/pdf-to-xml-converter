@@ -25,27 +25,25 @@ A modern web application that converts PDF documents to structured XML format wi
 
 ### Prerequisites
 
-- Node.js 18.x or higher
-- npm or yarn
+- Node.js 20.x or higher
+- npm
 - Git
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Kirtan134/pdf-to-xml-converter.git
+   git clone https://github.com/yourusername/pdf-to-xml-converter.git
    cd pdf-to-xml-converter
    ```
 
 2. **Install dependencies**
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
 3. **Configure environment variables**
-   Create a `.env.local` file in the root directory with:
+   Create a `.env.local` file in the root directory based on `.env.example`:
    ```
    DATABASE_URL="file:./dev.db"
    NEXTAUTH_SECRET="your-secure-random-string"
@@ -54,16 +52,13 @@ A modern web application that converts PDF documents to structured XML format wi
 
 4. **Set up the database**
    ```bash
+   npx prisma generate
    npx prisma migrate dev --name init
-   # or
-   yarn prisma migrate dev --name init
    ```
 
 5. **Run the development server**
    ```bash
    npm run dev
-   # or
-   yarn dev
    ```
 
 6. **Access the application**
@@ -74,37 +69,33 @@ A modern web application that converts PDF documents to structured XML format wi
 1. **Build the application**
    ```bash
    npm run build
-   # or
-   yarn build
    ```
 
 2. **Start the production server**
    ```bash
    npm start
-   # or
-   yarn start
    ```
 
 ## Technology Stack
 
 ### Core Technologies
 
-- **Next.js**: React framework with server-side rendering and API routes
-- **Prisma**: Type-safe ORM for database operations
-- **NextAuth.js**: Authentication system with multiple provider support
-- **Tailwind CSS**: Utility-first CSS framework for responsive design
-- **TypeScript**: Static typing for improved code quality
-- **PDF.js**: Mozilla's PDF rendering and parsing library
-- **SQLite**: Lightweight database for local development (can be replaced with PostgreSQL for production)
+- **Next.js 15.x**: React framework with server-side rendering and API routes
+- **Prisma 6.x**: Type-safe ORM for database operations
+- **NextAuth.js 4.x**: Authentication system with multiple provider support
+- **Tailwind CSS 4.x**: Utility-first CSS framework for responsive design
+- **TypeScript 5.x**: Static typing for improved code quality
+- **PDF.js**: PDF rendering and parsing library
+- **pdf-parse & pdf2json**: PDF extraction libraries
+- **React 19.x**: UI library for component-based development
+- **PostgreSQL**: Production database (with SQLite for development)
 
 ### Development Tools
 
-- **ESLint**: JavaScript/TypeScript linting
+- **ESLint 9.x**: JavaScript/TypeScript linting
 - **Prettier**: Code formatting
-- **Jest**: Testing framework
-- **React Testing Library**: Component testing
-- **Cypress**: End-to-end testing
-- **Husky**: Git hooks for pre-commit checks
+- **TypeScript**: Type checking
+- **Prisma Studio**: Database management UI
 
 ## Architecture and Design Decisions
 
@@ -248,77 +239,31 @@ The application follows these UX principles:
 4. **Accessibility**: WCAG AA compliance with keyboard navigation and screen reader support
 5. **Responsive Layout**: Adapts to different screen sizes and orientations
 
-## Testing Strategy
+## Project Structure
 
-The application includes comprehensive testing:
-
-1. **Unit Tests**: Individual function and utility testing
-2. **Component Tests**: Isolated UI component validation
-3. **Integration Tests**: API and database operation verification
-4. **End-to-End Tests**: Complete user flow validation
-5. **Accessibility Tests**: WCAG compliance verification
-
-## CI/CD Pipeline
-
-The project uses GitHub Actions for continuous integration and deployment:
-
-1. **Linting**: Code quality checks on every push
-2. **Testing**: Automated test execution for all pull requests
-3. **Build Verification**: Ensures the application builds successfully
-4. **Preview Deployments**: Creates temporary environments for pull requests
-5. **Production Deployment**: Automatic deployment to Vercel upon merging to main
-
-## Accessibility Features
-
-The application is designed for accessibility:
-
-1. **Semantic HTML**: Proper heading structure and ARIA landmarks
-2. **Keyboard Navigation**: Full functionality without a mouse
-3. **Screen Reader Support**: ARIA labels and helpful announcements
-4. **Focus Management**: Visible focus indicators and logical tab order
-5. **Color Contrast**: WCAG AA-compliant contrast ratios
-6. **Responsive Text**: Proper text scaling for readability
-
-## Assumptions and Limitations
-
-- **Document Complexity**: Very complex layouts may not convert with 100% accuracy
-- **Language Support**: Primary focus on left-to-right languages
-- **File Size**: Efficient processing for files up to 20MB (larger files may require longer processing)
-- **Browser Compatibility**: Targets modern browsers (Chrome, Firefox, Safari, Edge)
-- **Scanned Documents**: Limited support for image-based PDFs without OCR
-
-## Future Enhancements
-
-Given additional development time, these features would be valuable additions:
-
-1. **OCR Integration**: Support for scanned document conversion
-2. **Custom XML Schemas**: User-defined output formats
-3. **Batch Processing**: Multiple file conversion
-4. **Advanced Table Recognition**: Improved handling of complex tables
-5. **Collaboration Features**: Sharing and commenting on conversions
-6. **Additional Export Formats**: HTML, Markdown, and JSON output options
-7. **Integration with Cloud Storage**: Direct import/export with services like Dropbox and Google Drive
-8. **Machine Learning**: Enhanced structure detection with ML algorithms
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Upload Failures**: Ensure file size is under 10MB and is a valid PDF
-2. **Conversion Errors**: Complex PDFs may need the "Basic" structure type for reliable conversion
-3. **Database Connectivity**: Check DATABASE_URL in your environment variables
-4. **Authentication Issues**: Verify NEXTAUTH_SECRET and NEXTAUTH_URL settings
-
-### Support
-
-For issues or feature requests, please open an issue on GitHub.
+```
+pdf-to-xml-converter/
+├── src/                    # Source code
+│   ├── app/                # Next.js pages and API routes
+│   ├── components/         # React components
+│   ├── lib/                # Utility functions and services
+│   ├── types/              # TypeScript type definitions
+│   └── middleware.ts       # Next.js middleware
+├── prisma/                 # Database schema and migrations
+├── public/                 # Static assets
+└── ...
+```
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+## Contributing
 
-- PDF.js by Mozilla for PDF parsing capabilities
-- Next.js team for the excellent React framework
-- The open source community for the various libraries used in this project
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
