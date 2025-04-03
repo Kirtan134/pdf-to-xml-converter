@@ -90,13 +90,6 @@ A modern web application that converts PDF documents to structured XML format wi
 - **React 19.x**: UI library for component-based development
 - **PostgreSQL**: Production database (with SQLite for development)
 
-### Development Tools
-
-- **ESLint 9.x**: JavaScript/TypeScript linting
-- **Prettier**: Code formatting
-- **TypeScript**: Type checking
-- **Prisma Studio**: Database management UI
-
 ## Architecture and Design Decisions
 
 ### Why Next.js?
